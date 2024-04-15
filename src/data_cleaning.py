@@ -1,35 +1,21 @@
 import pandas as pd
+from currency_converter import convert_inr_to_eur
 
 
-def clean_data(df):
-    """
-    Cleans the input DataFrame by handling missing values, filtering outliers, and removing duplicates.
+def clean_data(df, separator):
+    print(separator + " Data cleaning results " + separator + "\n")
 
-    This function performs several data cleaning operations: it imputes missing values in the 'Screen_Size_cm'
-    and 'Weight_kg' columns, identifies and filters out price outliers using the Interquartile Range (IQR)
-    method, and removes any duplicate rows. Throughout the process, it provides console outputs to show the
-    number of missing values, outliers, and duplicates.
+    # Convert currency from INR to EUR
+    df = convert_inr_to_eur(df, "Price")
 
-    Parameters:
-    df (pandas.DataFrame): A DataFrame containing the data to be cleaned. Requires the following columns:
-    'Screen_Size_cm', 'Weight_kg', and 'Price'.
+    # Ensure that 'Warranty_Years' column is numeric, coerce non-numeric to NaN
+    df["Warranty_Years"] = pd.to_numeric(df["Warranty_Years"], errors="coerce")
 
-    Returns:
-    pandas.DataFrame: A cleaned DataFrame with outliers and duplicates removed.
+    # Drop rows with NaN in 'Warranty_Years'
+    df.loc[:, "Brand"] = df["Brand"].str.title()
 
-    Raises:
-    KeyError: If the required columns are missing in the input DataFrame.
-    ValueError: If the operations encounter a type mismatch or other calculation errors related to data types.
-    """
-
-    # Check for missing values
-    print(df.isnull().sum())
-
-    # Impute missing values for 'Screen_Size_cm' with the median
-    df.fillna({"Screen_Size_cm": df["Screen_Size_cm"].median()}, inplace=True)
-
-    # Impute missing values for 'Weight_kg' with the mean
-    df.fillna({"Weight_kg": df["Weight_kg"].mean()}, inplace=True)
+    # Make Brand column Proper Case
+    df["Brand"] = df["Brand"].str.title()
 
     # Identify outliers in 'Price' - Example using IQR (Interquartile Range)
     Q1 = df["Price"].quantile(0.25)
@@ -42,20 +28,20 @@ def clean_data(df):
     outliers = df[(df["Price"] < lower_bound) | (df["Price"] > upper_bound)]
 
     # Printing the number of outliers
-    print("Number of outliers found: ", outliers.shape[0])
+    if not outliers.empty:  # Check if the outliers dataframe is not empty
+        print(f"Found and removed {outliers.shape[0]} outliers from the data")
 
     # Filter out outliers
     df_clean = df[(df["Price"] >= lower_bound) & (df["Price"] <= upper_bound)]
 
     # Check for duplicates
     duplicate_rows = df_clean.duplicated().sum()
-    print("Number of duplicate rows: {duplicate_rows}")
+
+    # Printing the number of duplicate rows
+    if duplicate_rows > 0:
+        print(f"Number of duplicate rows: {duplicate_rows}")
 
     # Drop duplicates
     df_clean = df_clean.drop_duplicates()
-
-    # Final check
-    print(df_clean.info())
-    print()
 
     return df_clean
