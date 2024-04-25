@@ -29,7 +29,9 @@ def clean_data(df, separator):
 
     # Printing the number of outliers
     if not outliers.empty:  # Check if the outliers dataframe is not empty
-        print(f"Found and removed {outliers.shape[0]} outliers from the data")
+        print(
+            f"Found and removed {outliers.shape[0]} outliers from the data using IQR (Interquartile Range)"
+        )
 
     # Filter out outliers
     df_clean = df[(df["Price"] >= lower_bound) & (df["Price"] <= upper_bound)]
